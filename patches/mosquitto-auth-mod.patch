@@ -1,0 +1,58 @@
+diff --git a/a/Makefile b/b/Makefile
+index 12bc2cc..5b1ff11 100644
+--- a/a/Makefile
++++ b/b/Makefile
+@@ -30,8 +30,8 @@ ifneq ($(BACKEND_MYSQL),no)
+ 	BACKENDS += -DBE_MYSQL
+ 	BACKENDSTR += MySQL
+ 
+-	BE_CFLAGS += `mysql_config --cflags`
+-	BE_LDADD += `mysql_config --libs`
++	BE_CFLAGS += `mariadb_config --cflags`
++	BE_LDADD += `mariadb_config --libs`
+ 	OBJS += be-mysql.o
+ endif
+ 
+diff --git a/a/auth-plug.c b/b/auth-plug.c
+index 735589f..2667b03 100644
+--- a/a/auth-plug.c
++++ b/b/auth-plug.c
+@@ -497,11 +497,12 @@ int mosquitto_auth_security_cleanup(void *userdata, struct mosquitto_auth_opt *a
+ 	return MOSQ_ERR_SUCCESS;
+ }
+ 
+-
+-#if MOSQ_AUTH_PLUGIN_VERSION >=3
++#if MOSQ_AUTH_PLUGIN_VERSION >=4
++int mosquitto_auth_unpwd_check(void *userdata, struct mosquitto *client, const char *username, const char *password)
++#elif MOSQ_AUTH_PLUGIN_VERSION >=3
+ int mosquitto_auth_unpwd_check(void *userdata, const struct mosquitto *client, const char *username, const char *password)
+ #else
+-int mosquitto_auth_unpwd_check(void *userdata, const char *username, const char *password)
++nt mosquitto_auth_unpwd_check(void *userdata, const char *username, const char *password)
+ #endif
+ {
+ 	struct userdata *ud = (struct userdata *)userdata;
+@@ -597,7 +598,9 @@ int mosquitto_auth_unpwd_check(void *userdata, const char *username, const char
+ 	return granted;
+ }
+ 
+-#if MOSQ_AUTH_PLUGIN_VERSION >= 3
++#if MOSQ_AUTH_PLUGIN_VERSION >= 4
++int mosquitto_auth_acl_check(void *userdata, int access, struct mosquitto *client, const struct mosquitto_acl_msg *msg)
++#elif MOSQ_AUTH_PLUGIN_VERSION >= 3
+ int mosquitto_auth_acl_check(void *userdata, int access, const struct mosquitto *client, const struct mosquitto_acl_msg *msg)
+ #else
+ int mosquitto_auth_acl_check(void *userdata, const char *clientid, const char *username, const char *topic, int access)
+@@ -747,8 +750,9 @@ int mosquitto_auth_acl_check(void *userdata, const char *clientid, const char *u
+ 
+ }
+ 
+-
+-#if MOSQ_AUTH_PLUGIN_VERSION >= 3
++#if MOSQ_AUTH_PLUGIN_VERSION >= 4
++int mosquitto_auth_psk_key_get(void *userdata, struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len)
++#elif MOSQ_AUTH_PLUGIN_VERSION >= 3
+ int mosquitto_auth_psk_key_get(void *userdata, const struct mosquitto *client, const char *hint, const char *identity, char *key, int max_key_len)
+ #else
+ int mosquitto_auth_psk_key_get(void *userdata, const char *hint, const char *identity, char *key, int max_key_len)
